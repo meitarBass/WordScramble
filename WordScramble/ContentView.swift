@@ -17,9 +17,13 @@ struct ContentView: View {
     @State private var errorMessage = ""
     @State private var showingError = false
     
+    @State private var score = 0
+    
     var body: some View {
         NavigationView {
             List {
+                Text("Your score is \(score)")
+                
                 Section {
                     TextField("Enter your word", text: $newWord)
                         .textInputAutocapitalization(.never)
@@ -42,6 +46,12 @@ struct ContentView: View {
             } message: {
                 Text(errorMessage)
             }
+        }.toolbar {
+            ToolbarItem(placement: .bottomBar) {
+                Button("Restart") {
+                    startGame()
+                }
+            }
         }
     }
     
@@ -57,6 +67,11 @@ struct ContentView: View {
             wordError(title: "Word used already", message: "Be more original")
             return
         }
+        
+        guard isLongEnough(word: answer) else {
+            wordError(title: "Word too short", message: "Find longer words!")
+            return
+        }
 
         guard isPossible(word: answer) else {
             wordError(title: "Word not possible", message: "You can't spell that word from '\(rootWord)'!")
@@ -70,6 +85,7 @@ struct ContentView: View {
 
         withAnimation {
             usedWords.insert(answer, at: 0)
+            score = score + answer.count
         }
         
         newWord = ""
@@ -85,6 +101,9 @@ struct ContentView: View {
 
                 // 4. Pick one random word, or use "silkworm" as a sensible default
                 rootWord = allWords.randomElement() ?? "silkworm"
+                
+                usedWords.removeAll()
+                score = 0
 
                 // If we are here everything has worked, so we can exit
                 return
@@ -96,7 +115,7 @@ struct ContentView: View {
     }
     
     func isOriginal(word: String) -> Bool {
-        !usedWords.contains(word)
+        !(usedWords.contains(word) || word == rootWord.description)
     }
     
     func isPossible(word: String) -> Bool {
@@ -125,6 +144,10 @@ struct ContentView: View {
         errorTitle = title
         errorMessage = message
         showingError = true
+    }
+    
+    func isLongEnough(word: String) -> Bool {
+        return word.count >= 3
     }
 }
 
